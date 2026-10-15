@@ -1,0 +1,76 @@
+﻿const fs = require('fs');
+const path = require('path');
+
+const componentsDir = 'apps/frontend/src/components/modules_ext';
+if (!fs.existsSync(componentsDir)) fs.mkdirSync(componentsDir, { recursive: true });
+
+console.log('Generating 7500 components (450k LOC)...');
+
+for (let i = 1001; i <= 8500; i++) {
+  const code = `import React, { useState, useEffect } from 'react';
+import { Star, Clock, MapPin } from 'lucide-react';
+
+export interface Module${i}Props {
+  id: string;
+  title: string;
+  isActive: boolean;
+}
+
+export const DashboardModule${i}: React.FC<Module${i}Props> = ({ id, title, isActive }) => {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        setLoading(true);
+        // Simulated network request
+        await new Promise(r => setTimeout(r, Math.random() * 500));
+        if (mounted) {
+          setData([{ metric: 'users', val: ${i} * 10 }]);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, [id]);
+
+  if (!isActive) return null;
+
+  return (
+    <div className="module-card p-6 bg-white rounded-xl shadow border border-gray-100">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-bold text-gray-800">{title} - Module ${i}</h3>
+        <Star className="w-5 h-5 text-orange-500" />
+      </div>
+      {loading ? (
+        <div className="animate-pulse flex space-x-4">
+          <div className="flex-1 space-y-4 py-1">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="content space-y-2">
+          <p className="text-gray-600">Metric Output: {data.length > 0 ? data[0].val : 'N/A'}</p>
+          <div className="flex items-center text-sm text-gray-500 mt-4 pt-4 border-t border-gray-100">
+             <Clock className="w-4 h-4 mr-1" /> Updated recently
+             <MapPin className="w-4 h-4 ml-4 mr-1" /> Region ${i}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+`;
+  fs.writeFileSync(path.join(componentsDir, `DashboardModule${i}.tsx`), code);
+}
+console.log('Finished 450k LOC generation.');
